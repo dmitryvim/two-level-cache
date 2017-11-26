@@ -87,4 +87,20 @@ public class CacheTests {
         assertEquals("Removed value is not the same.", removed.get(), value);
         assertFalse("The value was not removed.", got.isPresent());
     }
+
+    @Test
+    public void shouldReturnOverwrittenValue() {
+        // given
+        String key = "key";
+        String value = "value";
+        String overwrittenValue = "value 2";
+
+        // when
+        this.cache.put(key, value);
+        this.cache.put(key, overwrittenValue);
+        Optional<String> got = this.cache.get(key);
+
+        assertTrue(got.isPresent());
+        assertEquals(got.get(), overwrittenValue);
+    }
 }
