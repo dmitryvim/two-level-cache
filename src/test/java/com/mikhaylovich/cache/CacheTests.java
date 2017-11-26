@@ -29,7 +29,9 @@ public class CacheTests {
     @Parameterized.Parameters
     public static List<Cache<String, String>> data() throws Exception {
         Path path = Files.createTempDirectory("queue-service-test");
-        return Arrays.asList(new InMemoryCache<>(CACHE_CAPACITY), new FileSystemCache<>(path.toFile(), String.class));
+        return Arrays.asList(
+                new InMemoryCache<>(CACHE_CAPACITY),
+                new FileSystemCache<>(path.toFile(), CACHE_CAPACITY, String.class));
     }
 
     @Before

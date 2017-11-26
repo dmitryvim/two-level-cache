@@ -1,6 +1,7 @@
 package com.mikhaylovich.cache;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Optional;
 
 /**
@@ -13,8 +14,11 @@ public class FileSystemCache<K, V> implements Cache<K, V> {
 
     private final Class<V> valueClass;
 
-    public FileSystemCache(File folder, Class<V> valueClass) {
+    private final int capacity;
+
+    public FileSystemCache(File folder, int capacity, Class<V> valueClass) {
         this.folder = folder;
+        this.capacity = capacity;
         this.valueClass = valueClass;
     }
 
@@ -30,11 +34,18 @@ public class FileSystemCache<K, V> implements Cache<K, V> {
 
     @Override
     public void put(K key, V value) {
-        fileHandler(key).write(value);
+        //TODO need lock on directory
+        if (this.capacity > this.size()) {
+            fileHandler(key).write(value);
+        } else {
+            //TODO if I need to specify exception
+            throw new IllegalStateException("Capacity exceeded");
+        }
     }
 
     @Override
     public void clear() {
+        Arrays.asList(this.folder.listFiles()).forEach(File::delete);
         // TODO clear directory
     }
 
@@ -43,5 +54,9 @@ public class FileSystemCache<K, V> implements Cache<K, V> {
         // TODO serialize key
         File file = new File(this.folder + "/" + key.toString());
         return new FileHandler<V>(file, this.valueClass);
+    }
+
+    private int size() {
+        return this.folder.listFiles().length;
     }
 }
