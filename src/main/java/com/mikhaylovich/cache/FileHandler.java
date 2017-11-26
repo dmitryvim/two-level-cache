@@ -21,33 +21,15 @@ class FileHandler<T> {
     }
 
     Optional<T> read() {
-        //TODO remove code duplicate
-        int retryCount = FILE_ACCESS_RETRY_COUNT;
-        int timeout = FILE_ACCESS_RETRY_TIMEOUT_IN_MS;
-        FileLock lock = null;
         try (FileInputStream fileInputStream = new FileInputStream(this.file)) {
-            FileChannel channel = fileInputStream.getChannel();
-            try {
-                lock = channel.tryLock(0, Long.MAX_VALUE, true);
-                while (lock == null && --retryCount > 0) {
-                    TimeUnit.MILLISECONDS.sleep(timeout);
-                    lock = channel.tryLock(0, Long.MAX_VALUE, true);
-                }
-                if (lock == null) {
-                    throw new IllegalStateException("Unable to get access to file");
-                } else {
-                    ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream);
-                    T object = (T) objectInputStream.readObject();
-                    return Optional.of(object);
-                }
-            } finally {
-                if (lock != null && lock.isValid()) {
-                    lock.close();
-                }
-            }
+            return workWithFileLock(fileInputStream.getChannel(), true, () -> {
+                ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream);
+                T object = (T) objectInputStream.readObject();
+                return Optional.of(object);
+            });
         } catch (FileNotFoundException e) {
             return Optional.empty();
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (IOException e) {
             throw illegalStateException(e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -56,10 +38,13 @@ class FileHandler<T> {
     }
 
     void write(T object) {
-        int retryCount = FILE_ACCESS_RETRY_COUNT;
-        int timeout = FILE_ACCESS_RETRY_TIMEOUT_IN_MS;
         try (FileOutputStream fileOutputStream = new FileOutputStream(this.file)) {
-            fileWork(object, fileOutputStream, retryCount, timeout);
+            workWithFileLock(fileOutputStream.getChannel(), false, () -> {
+                // will be closed with output stream
+                ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream);
+                objectOutputStream.writeObject(object);
+                return Optional.of(object);
+            });
         } catch (IOException e) {
             throw illegalStateException(e);
         } catch (InterruptedException e) {
@@ -67,23 +52,26 @@ class FileHandler<T> {
         }
     }
 
-    private void fileWork(T object, FileOutputStream fileOutputStream, int retryCount, int timeout)
+    private Optional<T> workWithFileLock(FileChannel channel, boolean read, FileWorker<T> worker) throws IOException, InterruptedException {
+        return workWithFileLock(channel, read, worker, FILE_ACCESS_RETRY_COUNT, FILE_ACCESS_RETRY_TIMEOUT_IN_MS);
+    }
+
+    private Optional<T> workWithFileLock(FileChannel channel, boolean read, FileWorker<T> worker, int retryCount, int timeout)
             throws IOException, InterruptedException {
-        FileChannel channel = fileOutputStream.getChannel();
         FileLock lock = null;
         try {
-            lock = channel.tryLock();
+            lock = channel.tryLock(0L, Long.MAX_VALUE, read);
             while (lock == null && --retryCount > 0) {
                 TimeUnit.MILLISECONDS.sleep(timeout);
-                lock = channel.tryLock();
+                lock = channel.tryLock(0L, Long.MAX_VALUE, read);
             }
             if (lock == null) {
                 throw new IllegalStateException("Unable to get access to file");
             } else {
-                // will be closed with output stream
-                ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream);
-                objectOutputStream.writeObject(object);
+                return worker.work();
             }
+        } catch (ClassNotFoundException e) {
+            throw illegalStateException(e);
         } finally {
             if (lock != null) {
                 lock.close();
@@ -108,5 +96,10 @@ class FileHandler<T> {
 
     private IllegalStateException illegalStateException(Exception e) {
         return new IllegalStateException("Unable to read object from file " + this.file, e);
+    }
+
+    @FunctionalInterface
+    private interface FileWorker<T> {
+        Optional<T> work() throws IOException, ClassNotFoundException;
     }
 }
