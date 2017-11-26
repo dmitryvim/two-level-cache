@@ -16,11 +16,8 @@ class FileHandler<T> {
 
     private final File file;
 
-    private final Class<T> clazz;
-
-    FileHandler(File file, Class<T> clazz) {
+    FileHandler(File file) {
         this.file = file;
-        this.clazz = clazz;
     }
 
     Optional<T> read() {
@@ -40,12 +37,8 @@ class FileHandler<T> {
                     throw new IllegalStateException("Unable to get access to file");
                 } else {
                     ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream);
-                    Object object = objectInputStream.readObject();
-                    if (clazz.isInstance(object)) {
-                        return Optional.of(object).map(this.clazz::cast);
-                    } else {
-                        throw illegalStateException();
-                    }
+                    T object = (T) objectInputStream.readObject();
+                    return Optional.of(object);
                 }
             } finally {
                 if (lock != null && lock.isValid()) {
@@ -66,30 +59,35 @@ class FileHandler<T> {
         int retryCount = FILE_ACCESS_RETRY_COUNT;
         int timeout = FILE_ACCESS_RETRY_TIMEOUT_IN_MS;
         try (FileOutputStream fileOutputStream = new FileOutputStream(this.file)) {
-            FileChannel channel = fileOutputStream.getChannel();
-            FileLock lock = null;
-            try {
-                lock = channel.tryLock();
-                while (lock == null && --retryCount > 0) {
-                    TimeUnit.MILLISECONDS.sleep(timeout);
-                    lock = channel.tryLock();
-                }
-                if (lock == null) {
-                    throw new IllegalStateException("Unable to get access to file");
-                } else {
-                    // will be closed with output stream
-                    ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream);
-                    objectOutputStream.writeObject(object);
-                }
-            } finally {
-                if (lock != null) {
-                    lock.close();
-                }
-            }
+            fileWork(object, fileOutputStream, retryCount, timeout);
         } catch (IOException e) {
             throw illegalStateException(e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+        }
+    }
+
+    private void fileWork(T object, FileOutputStream fileOutputStream, int retryCount, int timeout)
+            throws IOException, InterruptedException {
+        FileChannel channel = fileOutputStream.getChannel();
+        FileLock lock = null;
+        try {
+            lock = channel.tryLock();
+            while (lock == null && --retryCount > 0) {
+                TimeUnit.MILLISECONDS.sleep(timeout);
+                lock = channel.tryLock();
+            }
+            if (lock == null) {
+                throw new IllegalStateException("Unable to get access to file");
+            } else {
+                // will be closed with output stream
+                ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream);
+                objectOutputStream.writeObject(object);
+            }
+        } finally {
+            if (lock != null) {
+                lock.close();
+            }
         }
     }
 
@@ -105,10 +103,10 @@ class FileHandler<T> {
     }
 
     private IllegalStateException illegalStateException() {
-        return new IllegalStateException("Unable to read object class " + this.clazz + " from file " + this.file);
+        return new IllegalStateException("Unable to read object from file " + this.file);
     }
 
     private IllegalStateException illegalStateException(Exception e) {
-        return new IllegalStateException("Unable to read object class " + this.clazz + " from file " + this.file, e);
+        return new IllegalStateException("Unable to read object from file " + this.file, e);
     }
 }

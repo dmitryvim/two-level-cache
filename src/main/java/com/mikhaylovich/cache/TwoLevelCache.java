@@ -12,26 +12,25 @@ public class TwoLevelCache<K, V> implements Cache<K, V> {
 
     private final boolean readOnly;
 
-    private TwoLevelCache(int modifyDeep, int firstLevelCapacity, int secondLevelCapacity, File folder, Class<V> valueClass) {
+    private TwoLevelCache(int modifyDeep, int firstLevelCapacity, int secondLevelCapacity, File folder) {
         this.delegate = new MultiplyLevelCache<>(
                 modifyDeep,
                 new InMemoryCache<>(firstLevelCapacity),
-                new FileSystemCache<>(folder, secondLevelCapacity, valueClass)
+                new FileSystemCache<>(folder, secondLevelCapacity)
         );
         this.readOnly = modifyDeep == 0;
     }
 
-    //TODO remove valueClass
-    public static <K, V> TwoLevelCache<K, V> readOnlyCache(int firstLevelCapacity, int secondLevelCapacity, File folder, Class<V> valueClass) {
-        return new TwoLevelCache<>(0, firstLevelCapacity, secondLevelCapacity, folder, valueClass);
+    public static <K, V> TwoLevelCache<K, V> readOnlyCache(int firstLevelCapacity, int secondLevelCapacity, File folder) {
+        return new TwoLevelCache<>(0, firstLevelCapacity, secondLevelCapacity, folder);
     }
 
-    public static <K, V> TwoLevelCache<K, V> memoryReadWriteFileReadOnlyCahce(int firstLevelCapacity, int secondLevelCapacity, File folder, Class<V> valueClass) {
-        return new TwoLevelCache<>(1, firstLevelCapacity, secondLevelCapacity, folder, valueClass);
+    public static <K, V> TwoLevelCache<K, V> memoryReadWriteFileReadOnlyCahce(int firstLevelCapacity, int secondLevelCapacity, File folder) {
+        return new TwoLevelCache<>(1, firstLevelCapacity, secondLevelCapacity, folder);
     }
 
-    public static <K, V> TwoLevelCache<K, V> memoryFileReadWriteCache(int firstLevelCapacity, int secondLevelCapacity, File folder, Class<V> valueClass) {
-        return new TwoLevelCache<>(2, firstLevelCapacity, secondLevelCapacity, folder, valueClass);
+    public static <K, V> TwoLevelCache<K, V> memoryFileReadWriteCache(int firstLevelCapacity, int secondLevelCapacity, File folder) {
+        return new TwoLevelCache<>(2, firstLevelCapacity, secondLevelCapacity, folder);
     }
 
     @Override

@@ -11,15 +11,12 @@ public class FileSystemCache<K, V> implements Cache<K, V> {
 
     private final File folder;
 
-    private final Class<V> valueClass;
-
     private final int capacity;
 
-    public FileSystemCache(File folder, int capacity, Class<V> valueClass) {
+    public FileSystemCache(File folder, int capacity) {
         this.folder = folder;
         checkFolder();
         this.capacity = capacity;
-        this.valueClass = valueClass;
     }
 
     @Override
@@ -52,7 +49,7 @@ public class FileSystemCache<K, V> implements Cache<K, V> {
     private FileHandler<V> fileHandler(K key) {
         // TODO serialize key
         File file = new File(this.folder, key.toString());
-        return new FileHandler<>(file, this.valueClass);
+        return new FileHandler<>(file);
     }
 
     private int size() {

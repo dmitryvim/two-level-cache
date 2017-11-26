@@ -25,7 +25,7 @@ public class TwoLevelCacheTests {
     @Test(expected = UnsupportedOperationException.class)
     public void unableToModifyReadOnlYCache() throws Exception {
         // given
-        Cache<String, String> cache = TwoLevelCache.readOnlyCache(CACHE_CAPACITY, CACHE_CAPACITY, tempDirectory(), String.class);
+        Cache<String, String> cache = TwoLevelCache.readOnlyCache(CACHE_CAPACITY, CACHE_CAPACITY, tempDirectory());
 
         // expect
         cache.put("key", "value");
@@ -35,8 +35,8 @@ public class TwoLevelCacheTests {
     public void twoCachesOnTheSameFolder() throws Exception {
         // given
         File folder = tempDirectory();
-        Cache<String, String> first = TwoLevelCache.memoryFileReadWriteCache(CACHE_CAPACITY, CACHE_CAPACITY, folder, String.class);
-        Cache<String, String> second = TwoLevelCache.memoryFileReadWriteCache(CACHE_CAPACITY, CACHE_CAPACITY, folder, String.class);
+        Cache<String, String> first = TwoLevelCache.memoryFileReadWriteCache(CACHE_CAPACITY, CACHE_CAPACITY, folder);
+        Cache<String, String> second = TwoLevelCache.memoryFileReadWriteCache(CACHE_CAPACITY, CACHE_CAPACITY, folder);
         String key = "key";
         String value = "value";
 
@@ -53,8 +53,8 @@ public class TwoLevelCacheTests {
     public void twoCachesOnTheSameFolderFirstReadWriteSecondReadOnly() throws Exception {
         // given
         File folder = tempDirectory();
-        Cache<String, String> first = TwoLevelCache.memoryFileReadWriteCache(CACHE_CAPACITY, CACHE_CAPACITY, folder, String.class);
-        Cache<String, String> second = TwoLevelCache.memoryReadWriteFileReadOnlyCahce(CACHE_CAPACITY, CACHE_CAPACITY, folder, String.class);
+        Cache<String, String> first = TwoLevelCache.memoryFileReadWriteCache(CACHE_CAPACITY, CACHE_CAPACITY, folder);
+        Cache<String, String> second = TwoLevelCache.memoryReadWriteFileReadOnlyCahce(CACHE_CAPACITY, CACHE_CAPACITY, folder);
         String key = "key";
         String value = "value";
 

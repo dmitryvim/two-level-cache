@@ -16,7 +16,7 @@ public class FileHandlerTests {
     public void shouldReadAndWriteSameString() throws Exception {
         // given
         File file = File.createTempFile("cache_", "_test");
-        FileHandler<String> handler = new FileHandler<>(file, String.class);
+        FileHandler<String> handler = new FileHandler<>(file);
         String string = "String";
 
         // when
@@ -32,7 +32,7 @@ public class FileHandlerTests {
     public void shouldReturnEmptyObjectFromEmptyFile() throws Exception {
         // given
         File file = new File("some_unpresent_name");
-        FileHandler<String> handler = new FileHandler<>(file, String.class);
+        FileHandler<String> handler = new FileHandler<>(file);
 
         // when
         Optional<String> read = handler.read();
