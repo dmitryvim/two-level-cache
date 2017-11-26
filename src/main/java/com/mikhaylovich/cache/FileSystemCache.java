@@ -25,8 +25,7 @@ public class FileSystemCache<K, V> implements Cache<K, V> {
 
     @Override
     public Optional<V> remove(K key) {
-        // TODO remove
-        return fileHandler(key).read();
+        return fileHandler(key).remove();
     }
 
     @Override

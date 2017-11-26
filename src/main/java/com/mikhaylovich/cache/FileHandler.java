@@ -35,6 +35,17 @@ public class FileHandler<T> {
         }
     }
 
+    public Optional<T> remove() {
+        Optional<T> read = read();
+        boolean deleted = this.file.delete();
+        if (deleted) {
+            return read;
+        } else {
+            throw new IllegalStateException("Unable to remove file " + this.file + ".");
+        }
+
+    }
+
     private Optional<T> read(InputStream inputStream) throws IOException {
         try (ObjectInputStream objectInputStream = new ObjectInputStream(inputStream)) {
             Object object = objectInputStream.readObject();
