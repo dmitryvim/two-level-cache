@@ -7,7 +7,6 @@ import java.util.Optional;
 /**
  * Created by dmitry on 26.11.17. ${PATH}
  */
-// TODO capacity
 public class FileSystemCache<K, V> implements Cache<K, V> {
 
     private final File folder;
@@ -37,7 +36,6 @@ public class FileSystemCache<K, V> implements Cache<K, V> {
         if (this.capacity > this.size()) {
             fileHandler(key).write(value);
         } else {
-            //TODO if I need to specify exception
             throw new IllegalStateException("Capacity exceeded");
         }
     }

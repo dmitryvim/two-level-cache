@@ -28,7 +28,6 @@ public class MultiplyLevelCache<K, V> implements Cache<K, V> {
 
     @Override
     public Optional<V> remove(K key) {
-        //TODO сам себе создал проблемы
         Optional<V> result = Optional.empty();
         for (Cache<K, V> cache : this.caches) {
             Optional<V> removed = cache.remove(key);
