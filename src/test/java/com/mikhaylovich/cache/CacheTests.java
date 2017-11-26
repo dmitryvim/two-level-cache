@@ -59,7 +59,7 @@ public class CacheTests {
     }
 
     private static File tempDirectory() throws IOException {
-        Path directory = Files.createTempDirectory("queue-service-test");
+        Path directory = Files.createTempDirectory("cache-service-test");
         return directory.toFile();
     }
 

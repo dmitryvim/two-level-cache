@@ -10,12 +10,15 @@ public class TwoLevelCache<K, V> implements Cache<K, V> {
 
     private final Cache<K, V> delegate;
 
+    private final boolean readOnly;
+
     private TwoLevelCache(int modifyDeep, int firstLevelCapacity, int secondLevelCapacity, File folder, Class<V> valueClass) {
         this.delegate = new MultiplyLevelCache<>(
                 modifyDeep,
                 new InMemoryCache<>(firstLevelCapacity),
                 new FileSystemCache<>(folder, secondLevelCapacity, valueClass)
         );
+        this.readOnly = modifyDeep == 0;
     }
 
     //TODO remove valueClass
@@ -38,16 +41,28 @@ public class TwoLevelCache<K, V> implements Cache<K, V> {
 
     @Override
     public Optional<V> remove(K key) {
-        return this.delegate.remove(key);
+        if (this.readOnly) {
+            throw new UnsupportedOperationException("Read only cache.");
+        } else {
+            return this.delegate.remove(key);
+        }
     }
 
     @Override
     public void put(K key, V value) {
-        this.delegate.put(key, value);
+        if (this.readOnly) {
+            throw new UnsupportedOperationException("Read only cache.");
+        } else {
+            this.delegate.put(key, value);
+        }
     }
 
     @Override
     public void clear() {
-        this.delegate.clear();
+        if (this.readOnly) {
+            throw new UnsupportedOperationException("Read only cache.");
+        } else {
+            this.delegate.clear();
+        }
     }
 }
