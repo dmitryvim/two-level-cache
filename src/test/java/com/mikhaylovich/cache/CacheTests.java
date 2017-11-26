@@ -5,8 +5,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -27,10 +28,14 @@ public class CacheTests {
 
     @Parameterized.Parameters
     public static List<Cache<String, String>> data() throws Exception {
-        Path path = Files.createTempDirectory("queue-service-test");
         return Arrays.asList(
                 new InMemoryCache<>(CACHE_CAPACITY),
-                new FileSystemCache<>(path.toFile(), CACHE_CAPACITY, String.class));
+                new FileSystemCache<>(tempDirectory(), CACHE_CAPACITY, String.class),
+                new MultiplyLevelCache<>(new InMemoryCache<>(CACHE_CAPACITY), new InMemoryCache<>(CACHE_CAPACITY), new InMemoryCache<>(CACHE_CAPACITY)),
+                TwoLevelCache.readOnlyCache(CACHE_CAPACITY, CACHE_CAPACITY, tempDirectory(), String.class),
+                TwoLevelCache.memoryFileReadWriteCache(CACHE_CAPACITY, CACHE_CAPACITY, tempDirectory(), String.class),
+                TwoLevelCache.memoryReadWriteFileReadOnlyCahce(CACHE_CAPACITY, CACHE_CAPACITY, tempDirectory(), String.class)
+        );
     }
 
     @Before
@@ -78,4 +83,8 @@ public class CacheTests {
         }
     }
 
+
+    private static File tempDirectory() throws IOException {
+        return Files.createTempDirectory("queue-service-test").toFile();
+    }
 }
