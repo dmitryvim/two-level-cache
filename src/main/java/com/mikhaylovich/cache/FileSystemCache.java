@@ -16,8 +16,8 @@ public class FileSystemCache<K, V> implements Cache<K, V> {
     private final int capacity;
 
     public FileSystemCache(File folder, int capacity, Class<V> valueClass) {
-        //TODO chech folder
         this.folder = folder;
+        checkFolder();
         this.capacity = capacity;
         this.valueClass = valueClass;
     }
@@ -59,5 +59,17 @@ public class FileSystemCache<K, V> implements Cache<K, V> {
     private int size() {
         File[] files = this.folder.listFiles();
         return (files == null) ? 0 : files.length;
+    }
+
+    private void checkFolder() {
+        if (this.folder.exists()) {
+            if (!this.folder.isDirectory()) {
+                throw new IllegalArgumentException("Folder should be directory.");
+            }
+        } else {
+            if (!this.folder.mkdir()) {
+                throw new IllegalArgumentException("Unable to create directory.");
+            }
+        }
     }
 }
