@@ -8,6 +8,7 @@ import org.junit.runners.Parameterized;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -32,7 +33,6 @@ public class CacheTests {
                 new InMemoryCache<>(CACHE_CAPACITY),
                 new FileSystemCache<>(tempDirectory(), CACHE_CAPACITY, String.class),
                 new MultiplyLevelCache<>(new InMemoryCache<>(CACHE_CAPACITY), new InMemoryCache<>(CACHE_CAPACITY), new InMemoryCache<>(CACHE_CAPACITY)),
-                TwoLevelCache.readOnlyCache(CACHE_CAPACITY, CACHE_CAPACITY, tempDirectory(), String.class),
                 TwoLevelCache.memoryFileReadWriteCache(CACHE_CAPACITY, CACHE_CAPACITY, tempDirectory(), String.class),
                 TwoLevelCache.memoryReadWriteFileReadOnlyCahce(CACHE_CAPACITY, CACHE_CAPACITY, tempDirectory(), String.class)
         );
@@ -58,8 +58,21 @@ public class CacheTests {
         assertEquals("Cache returned another value.", got.get(), value);
     }
 
+    private static File tempDirectory() throws IOException {
+        Path directory = Files.createTempDirectory("queue-service-test");
+        return directory.toFile();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void shouldThrowExceptionOnCapacityExceeded() {
+        // expect
+        for (int i = 0; i <= CACHE_CAPACITY; i++) {
+            this.cache.put(UUID.randomUUID().toString(), "value");
+        }
+    }
+
     @Test
-    public void shouldReturnEmptyONRemovedValue() {
+    public void shouldReturnEmptyOnRemovedValue() {
         // given
         String key = "key";
         String value = "value";
@@ -73,18 +86,5 @@ public class CacheTests {
         assertTrue(removed.isPresent());
         assertEquals("Removed value is not the same.", removed.get(), value);
         assertFalse("The value was not removed.", got.isPresent());
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void shouldThrowExceptionOnCapacityExceeded() {
-        // expect
-        for (int i = 0; i <= CACHE_CAPACITY; i++) {
-            this.cache.put(UUID.randomUUID().toString(), "value");
-        }
-    }
-
-
-    private static File tempDirectory() throws IOException {
-        return Files.createTempDirectory("queue-service-test").toFile();
     }
 }

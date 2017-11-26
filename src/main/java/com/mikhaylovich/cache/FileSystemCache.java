@@ -46,7 +46,6 @@ public class FileSystemCache<K, V> implements Cache<K, V> {
                 .map(File::listFiles)
                 .map(Arrays::asList)
                 .ifPresent(list -> list.forEach(File::delete));
-        this.folder.delete();
     }
 
     private FileHandler<V> fileHandler(K key) {
