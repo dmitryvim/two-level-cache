@@ -50,9 +50,8 @@ public class FileSystemCache<K, V> implements Cache<K, V> {
     }
 
     private FileHandler<V> fileHandler(K key) {
-        // TODO only for unix
         // TODO serialize key
-        File file = new File(this.folder + "/" + key.toString());
+        File file = new File(this.folder, key.toString());
         return new FileHandler<>(file, this.valueClass);
     }
 
