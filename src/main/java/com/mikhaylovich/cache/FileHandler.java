@@ -24,6 +24,7 @@ class FileHandler<T> {
     }
 
     Optional<T> read() {
+        //TODO remove code duplicate
         int retryCount = FILE_ACCESS_RETRY_COUNT;
         int timeout = FILE_ACCESS_RETRY_TIMEOUT_IN_MS;
         FileLock lock = null;

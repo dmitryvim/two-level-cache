@@ -16,6 +16,7 @@ public class FileSystemCache<K, V> implements Cache<K, V> {
     private final int capacity;
 
     public FileSystemCache(File folder, int capacity, Class<V> valueClass) {
+        //TODO chech folder
         this.folder = folder;
         this.capacity = capacity;
         this.valueClass = valueClass;
