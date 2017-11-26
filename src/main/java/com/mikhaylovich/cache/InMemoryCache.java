@@ -9,10 +9,16 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class InMemoryCache<K, V> implements Cache<K, V> {
 
-    // TODO add capacity
     // TODO add expire time (really?)
 
-    private final Map<K, V> storage = new ConcurrentHashMap<>();
+    private final Map<K, V> storage;
+
+    private final int capacity;
+
+    public InMemoryCache(int capacity) {
+        this.capacity = capacity;
+        this.storage = new ConcurrentHashMap<>(this.capacity);
+    }
 
     @Override
     public Optional<V> get(K key) {
@@ -26,7 +32,12 @@ public class InMemoryCache<K, V> implements Cache<K, V> {
 
     @Override
     public void put(K key, V value) {
-        this.storage.put(key, value);
+        if (this.storage.size() < this.capacity) {
+            this.storage.put(key, value);
+        } else {
+            //TODO if I need to specify exception
+            throw new IllegalStateException("Capacity exceeded");
+        }
     }
 
     @Override
