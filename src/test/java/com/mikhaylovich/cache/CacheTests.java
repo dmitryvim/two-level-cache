@@ -12,8 +12,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.*;
 
 /**
  * Created by dmitry on 21.11.17. ${PATH}
@@ -47,9 +46,11 @@ public class CacheTests {
 
         // when
         this.cache.put(key, value);
+        Optional<String> got = this.cache.get(key);
 
         // then
-        assertEquals("Cache returned another value.", this.cache.get(key).get(), value);
+        assertTrue(got.isPresent());
+        assertEquals("Cache returned another value.", got.get(), value);
     }
 
     @Test
@@ -61,10 +62,12 @@ public class CacheTests {
         // when
         this.cache.put(key, value);
         Optional<String> removed = this.cache.remove(key);
+        Optional<String> got = this.cache.get(key);
 
         // then
+        assertTrue(removed.isPresent());
         assertEquals("Removed value is not the same.", removed.get(), value);
-        assertFalse("The value was not removed.", this.cache.get(key).isPresent());
+        assertFalse("The value was not removed.", got.isPresent());
     }
 
     @Test(expected = IllegalStateException.class)

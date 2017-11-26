@@ -34,7 +34,6 @@ public class FileSystemCache<K, V> implements Cache<K, V> {
 
     @Override
     public void put(K key, V value) {
-        //TODO need lock on directory
         if (this.capacity > this.size()) {
             fileHandler(key).write(value);
         } else {
@@ -45,18 +44,22 @@ public class FileSystemCache<K, V> implements Cache<K, V> {
 
     @Override
     public void clear() {
-        Arrays.asList(this.folder.listFiles()).forEach(File::delete);
-        // TODO clear directory
+        Optional.of(this.folder)
+                .map(File::listFiles)
+                .map(Arrays::asList)
+                .ifPresent(list -> list.forEach(File::delete));
+        this.folder.delete();
     }
 
     private FileHandler<V> fileHandler(K key) {
         // TODO only for unix
         // TODO serialize key
         File file = new File(this.folder + "/" + key.toString());
-        return new FileHandler<V>(file, this.valueClass);
+        return new FileHandler<>(file, this.valueClass);
     }
 
     private int size() {
-        return this.folder.listFiles().length;
+        File[] files = this.folder.listFiles();
+        return (files == null) ? 0 : files.length;
     }
 }
