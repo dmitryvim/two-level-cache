@@ -9,6 +9,9 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class InMemoryCache<K, V> implements Cache<K, V> {
 
+    // TODO add capacity
+    // TODO add expire time (really?)
+
     private final Map<K, V> storage = new ConcurrentHashMap<>();
 
     @Override
