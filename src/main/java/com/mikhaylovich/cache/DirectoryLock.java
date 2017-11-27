@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
+import java.nio.channels.OverlappingFileLockException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -47,13 +48,12 @@ public class DirectoryLock implements AutoCloseable {
         int retryCount = FILE_ACCESS_RETRY_COUNT;
         String access = readonly ? "r" : "rw";
         try {
-            //TODO check why lock failed faster than 10 seconds
             this.randomAccessFile = new RandomAccessFile(lockFile, access);
             FileChannel channel = this.randomAccessFile.getChannel();
-            this.fileLock = channel.tryLock(0L, Long.MAX_VALUE, readonly);
+            this.fileLock = tryLock(channel, readonly);
             while (this.fileLock == null && --retryCount > 0) {
                 TimeUnit.MILLISECONDS.sleep(FILE_ACCESS_RETRY_TIMEOUT_IN_MS);
-                this.fileLock = channel.tryLock(0L, Long.MAX_VALUE, readonly);
+                this.fileLock = tryLock(channel, readonly);
             }
 
             if (this.fileLock == null) {
@@ -67,6 +67,15 @@ public class DirectoryLock implements AutoCloseable {
         } catch (IOException e) {
             throw new IllegalStateException("Unable to create lock on file");
         }
+    }
+
+    private FileLock tryLock(FileChannel channel, boolean readonly) throws IOException {
+        try {
+            return channel.tryLock(0L, Long.MAX_VALUE, readonly);
+        } catch (OverlappingFileLockException e) {
+            return null;
+        }
+
     }
 
     @Override
