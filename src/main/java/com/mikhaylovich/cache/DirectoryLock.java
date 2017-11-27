@@ -41,6 +41,7 @@ public class DirectoryLock implements AutoCloseable {
         int retryCount = FILE_ACCESS_RETRY_COUNT;
         String access = readonly ? "r" : "rw";
         try {
+            //TODO check why lock failed faster than 10 seconds
             this.randomAccessFile = new RandomAccessFile(lockFile, access);
             FileChannel channel = this.randomAccessFile.getChannel();
             this.fileLock = channel.tryLock(0L, Long.MAX_VALUE, readonly);
