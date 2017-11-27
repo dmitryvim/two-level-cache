@@ -35,7 +35,6 @@ public class MultiplyLevelCache<K, V> implements Cache<K, V> {
         if (result.isPresent()) {
             while (iterator.hasPrevious()) {
                 Cache<K, V> cache = iterator.previous();
-                //TODO ensure previous index
                 if (iterator.previousIndex() < this.modifyDeep) {
                     //TODO capacity check
                     cache.put(key, result.get());

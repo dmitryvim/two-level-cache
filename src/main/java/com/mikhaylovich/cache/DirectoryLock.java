@@ -16,7 +16,7 @@ public class DirectoryLock implements AutoCloseable {
 
     private static final int FILE_ACCESS_RETRY_TIMEOUT_IN_MS = 100;
 
-    private static final String LOCK_FILE_NAME = "cache.lock";
+    private static final String LOCK_FILE_SUFFIX = ".cache.lock";
 
     private RandomAccessFile randomAccessFile;
 
@@ -26,7 +26,7 @@ public class DirectoryLock implements AutoCloseable {
         if (!directory.exists() || !directory.isDirectory()) {
             throw new IllegalArgumentException("Directory must be a directory");
         }
-        File lockFile = new File(directory, LOCK_FILE_NAME);
+        File lockFile = lockFile(directory);
         try {
             if (!lockFile.exists() && !lockFile.createNewFile()) {
                 throw new IllegalStateException("Unable to create lock file in directory " + directory);
@@ -35,6 +35,12 @@ public class DirectoryLock implements AutoCloseable {
             throw new IllegalStateException("Unable to write lock file in directory " + directory, e);
         }
         init(lockFile, readonly);
+    }
+
+    private File lockFile(File directory) {
+        File parent = directory.getParentFile();
+        String name = directory.getName() + LOCK_FILE_SUFFIX;
+        return new File(parent, name);
     }
 
     private void init(File lockFile, boolean readonly) {
@@ -64,7 +70,7 @@ public class DirectoryLock implements AutoCloseable {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() throws IOException {
         if (this.fileLock != null && this.fileLock.isValid()) {
             this.fileLock.close();
         }

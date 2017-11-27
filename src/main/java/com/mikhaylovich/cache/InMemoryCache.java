@@ -33,7 +33,6 @@ public class InMemoryCache<K, V> implements Cache<K, V> {
         if (this.storage.size() < this.capacity) {
             this.storage.put(key, value);
         } else {
-            //TODO if I need to specify exception
             throw new IllegalStateException("Capacity exceeded");
         }
     }
