@@ -23,7 +23,7 @@ public class DirectoryLock implements AutoCloseable {
     private FileLock fileLock;
 
     public DirectoryLock(File directory, boolean readonly) {
-        if (!directory.exists() || directory.isDirectory()) {
+        if (!directory.exists() || !directory.isDirectory()) {
             throw new IllegalArgumentException("Directory must be a directory");
         }
         File lockFile = new File(directory, LOCK_FILE_NAME);
@@ -39,7 +39,7 @@ public class DirectoryLock implements AutoCloseable {
 
     private void init(File lockFile, boolean readonly) {
         int retryCount = FILE_ACCESS_RETRY_COUNT;
-        String access = readonly ? "r" : "w";
+        String access = readonly ? "r" : "rw";
         try {
             this.randomAccessFile = new RandomAccessFile(lockFile, access);
             FileChannel channel = this.randomAccessFile.getChannel();
