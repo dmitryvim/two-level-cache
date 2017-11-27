@@ -2,7 +2,6 @@ package com.mikhaylovich.cache;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -42,17 +41,6 @@ public class DirectoryLockTests {
         }
         try (DirectoryLock lock2 = new DirectoryLock(this.directory, false)) {
             // empty
-        }
-    }
-
-    //TODO или убрать оптимизацию, или починить shared lock
-    @Ignore
-    @Test
-    public void shouldShareReadOnlyLock() throws Exception {
-        try (DirectoryLock lock1 = new DirectoryLock(this.directory, true)) {
-            try (DirectoryLock lock2 = new DirectoryLock(this.directory, true)) {
-                // empty
-            }
         }
     }
 }
