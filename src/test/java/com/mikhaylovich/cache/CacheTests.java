@@ -32,7 +32,6 @@ public class CacheTests {
         return Arrays.asList(
                 new InMemoryCache<>(CACHE_CAPACITY),
                 new FileSystemCache<>(tempDirectory(), CACHE_CAPACITY),
-                new MultiplyLevelCache<>(new InMemoryCache<>(CACHE_CAPACITY), new InMemoryCache<>(CACHE_CAPACITY), new InMemoryCache<>(CACHE_CAPACITY)),
                 TwoLevelCache.memoryFileReadWriteCache(CACHE_CAPACITY, CACHE_CAPACITY, tempDirectory()),
                 TwoLevelCache.memoryReadWriteFileReadOnlyCahce(CACHE_CAPACITY, CACHE_CAPACITY, tempDirectory())
         );

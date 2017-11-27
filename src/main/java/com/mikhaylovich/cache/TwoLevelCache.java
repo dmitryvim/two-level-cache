@@ -8,65 +8,84 @@ import java.util.Optional;
  */
 public class TwoLevelCache<K, V> implements Cache<K, V> {
 
-    private final Cache<K, V> delegate;
+    private final Cache<K, V> memoryCache;
 
-    private final boolean readOnly;
+    private final Cache<K, V> fileCache;
 
-    private TwoLevelCache(int modifyDeep, int firstLevelCapacity, int secondLevelCapacity, File folder) {
-        this.delegate = new MultiplyLevelCache<>(
-                modifyDeep,
-                new InMemoryCache<>(firstLevelCapacity),
-                new FileSystemCache<>(folder, secondLevelCapacity)
-        );
-        this.readOnly = modifyDeep == 0;
+    private final int modifyDeep;
+
+    private TwoLevelCache(int modifyDeep, int memoryCacheCapacity, int fileCacheCapacity, File folder) {
+        this.memoryCache = new InMemoryCache<>(memoryCacheCapacity);
+        this.fileCache = new FileSystemCache<>(folder, fileCacheCapacity);
+        this.modifyDeep = modifyDeep;
     }
 
-    public static <K, V> TwoLevelCache<K, V> readOnlyCache(int firstLevelCapacity, int secondLevelCapacity, File folder) {
-        return new TwoLevelCache<>(0, firstLevelCapacity, secondLevelCapacity, folder);
+    public static <K, V> TwoLevelCache<K, V> readOnlyCache(int memoryCacheCapacity, int fileCacheCapacity, File folder) {
+        return new TwoLevelCache<>(0, memoryCacheCapacity, fileCacheCapacity, folder);
     }
 
-    public static <K, V> TwoLevelCache<K, V> memoryReadWriteFileReadOnlyCahce(int firstLevelCapacity, int secondLevelCapacity, File folder) {
-        return new TwoLevelCache<>(1, firstLevelCapacity, secondLevelCapacity, folder);
+    public static <K, V> TwoLevelCache<K, V> memoryReadWriteFileReadOnlyCahce(int memoryCacheCapacity, int fileCacheCapacity, File folder) {
+        return new TwoLevelCache<>(1, memoryCacheCapacity, fileCacheCapacity, folder);
     }
 
-    public static <K, V> TwoLevelCache<K, V> memoryFileReadWriteCache(int firstLevelCapacity, int secondLevelCapacity, File folder) {
-        return new TwoLevelCache<>(2, firstLevelCapacity, secondLevelCapacity, folder);
+    public static <K, V> TwoLevelCache<K, V> memoryFileReadWriteCache(int memoryCacheCapacity, int fileCacheCapacity, File folder) {
+        return new TwoLevelCache<>(2, memoryCacheCapacity, fileCacheCapacity, folder);
     }
 
     @Override
     public Optional<V> get(K key) {
-        return this.delegate.get(key);
+        Optional<V> result = this.memoryCache.get(key);
+        if (!result.isPresent()) {
+            result = this.fileCache.get(key);
+            if (result.isPresent() && this.memoryCache.canPut()) {
+                this.memoryCache.put(key, result.get());
+            }
+        }
+        return result;
     }
 
     @Override
     public Optional<V> remove(K key) {
-        if (this.readOnly) {
-            throw new UnsupportedOperationException("Read only cache.");
-        } else {
-            return this.delegate.remove(key);
+        if (this.modifyDeep > 0) {
+            Optional<V> result = this.memoryCache.remove(key);
+            if (this.modifyDeep > 1) {
+                Optional<V> fileResult = this.fileCache.remove(key);
+                if (!result.isPresent()) {
+                    result = fileResult;
+                }
+            }
+            return result;
         }
+        return Optional.empty();
     }
 
     @Override
     public void put(K key, V value) {
-        if (this.readOnly) {
+        if (this.modifyDeep == 0) {
             throw new UnsupportedOperationException("Read only cache.");
         } else {
-            this.delegate.put(key, value);
+            if (canPut()) {
+                if (memoryCache.canPut()) {
+                    this.memoryCache.put(key, value);
+                }
+                if (this.modifyDeep > 1 && this.fileCache.canPut()) {
+                    this.fileCache.put(key, value);
+                }
+            } else {
+                throw new IllegalStateException("Unable to put new value");
+            }
         }
     }
 
     @Override
     public void clear() {
-        if (this.readOnly) {
-            throw new UnsupportedOperationException("Read only cache.");
-        } else {
-            this.delegate.clear();
-        }
+        this.memoryCache.clear();
+        this.fileCache.clear();
     }
 
     @Override
     public boolean canPut() {
-        return !this.readOnly || this.delegate.canPut();
+        return (this.modifyDeep > 0 && this.memoryCache.canPut()) ||
+                (this.modifyDeep > 1 && this.fileCache.canPut());
     }
 }
