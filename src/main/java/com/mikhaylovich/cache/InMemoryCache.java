@@ -41,4 +41,9 @@ public class InMemoryCache<K, V> implements Cache<K, V> {
     public void clear() {
         this.storage.clear();
     }
+
+    @Override
+    public boolean canPut() {
+        return this.storage.size() < this.capacity;
+    }
 }

@@ -36,8 +36,9 @@ public class MultiplyLevelCache<K, V> implements Cache<K, V> {
             while (iterator.hasPrevious()) {
                 Cache<K, V> cache = iterator.previous();
                 if (iterator.previousIndex() < this.modifyDeep) {
-                    //TODO capacity check
-                    cache.put(key, result.get());
+                    if (cache.canPut()) {
+                        cache.put(key, result.get());
+                    }
                 }
             }
         }
@@ -48,10 +49,10 @@ public class MultiplyLevelCache<K, V> implements Cache<K, V> {
     public Optional<V> remove(K key) {
         ListIterator<Cache<K, V>> iterator = cacheIterator();
         Optional<V> result = Optional.empty();
-        while (iterator.hasNext() && iterator.nextIndex() < this.modifyDeep && !result.isPresent()) {
+        while (hasModifyableNext(iterator) && !result.isPresent()) {
             result = iterator.next().remove(key);
         }
-        while (iterator.hasNext() && iterator.nextIndex() < this.modifyDeep) {
+        while (hasModifyableNext(iterator)) {
             iterator.next().remove(key);
         }
         return result;
@@ -67,14 +68,30 @@ public class MultiplyLevelCache<K, V> implements Cache<K, V> {
         forEachModifyableCache(Cache::clear);
     }
 
+    @Override
+    public boolean canPut() {
+        ListIterator<Cache<K, V>> iterator = cacheIterator();
+        while (hasModifyableNext(iterator)) {
+            Cache<K, V> cache = iterator.next();
+            if (cache.canPut()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private ListIterator<Cache<K, V>> cacheIterator() {
         return this.caches.listIterator();
     }
 
     private void forEachModifyableCache(Consumer<Cache<K, V>> consumer) {
         ListIterator<Cache<K, V>> iterator = cacheIterator();
-        while (iterator.hasNext() && iterator.nextIndex() < this.modifyDeep) {
+        while (hasModifyableNext(iterator)) {
             consumer.accept(iterator.next());
         }
+    }
+
+    private boolean hasModifyableNext(ListIterator<Cache<K, V>> iterator) {
+        return iterator.hasNext() && iterator.nextIndex() < this.modifyDeep;
     }
 }

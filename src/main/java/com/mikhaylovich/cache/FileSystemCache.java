@@ -58,6 +58,11 @@ public class FileSystemCache<K, V> implements Cache<K, V> {
         }
     }
 
+    @Override
+    public boolean canPut() {
+        return this.size() < this.capacity;
+    }
+
     private int size() {
         int size = 0;
         for (File hashFolder : this.folder.listFiles()) {

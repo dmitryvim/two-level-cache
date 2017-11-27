@@ -64,4 +64,9 @@ public class TwoLevelCache<K, V> implements Cache<K, V> {
             this.delegate.clear();
         }
     }
+
+    @Override
+    public boolean canPut() {
+        return !this.readOnly || this.delegate.canPut();
+    }
 }
